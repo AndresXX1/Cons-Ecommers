@@ -1,0 +1,47 @@
+name: Auto deploy padelink-frontend in VPS
+
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - ".github/workflows/**"
+      - "index.html"
+      - "package.json"
+      - "public/**"
+      - "scripts/**"
+      - "src/**"
+      - "vite.config.js"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Deploy using ssh
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_SSH_HOST }}
+          username: ${{ secrets.PRODUCTION_SSH_USERNAME }}
+          key: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /root/repos/argenpesos-ecommerce
+            git pull origin production
+            cat <<EOF > .env
+            VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}
+            VITE_BACKEND_URL2=${{ secrets.VITE_BACKEND_URL2 }}
+            VITE_PUBLIC_TOKEN_NAME=${{ secrets.VITE_PUBLIC_TOKEN_NAME }}
+            VITE_PUBLIC_TOKEN_REFRESH_NAME=${{ secrets.VITE_PUBLIC_TOKEN_REFRESH_NAME }}
+            VITE_PUBLIC_TOKEN_NAME_ADMIN=${{ secrets.VITE_PUBLIC_TOKEN_NAME_ADMIN }}
+            VITE_PUBLIC_TOKEN_REFRESH_NAME_ADMIN=${{ secrets.VITE_PUBLIC_TOKEN_REFRESH_NAME_ADMIN }}
+            VITE_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.VITE_PUBLIC_GOOGLE_CLIENT_ID }}
+            EOF
+            docker-compose build
+            docker-compose down -v
+            docker-compose up -d

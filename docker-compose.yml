@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  argenpesos-ecommerce:
+    container_name: argenpesos-ecommerce
+    build:
+      dockerfile: Dockerfile
+      context: .
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3500:3500"
+    networks:
+      - argenpesos_network
+
+networks:
+  argenpesos_network:
